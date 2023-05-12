@@ -37,7 +37,7 @@ export async function processTextToChat(ctx, content) {
 function startInactivityTimer(ctx) {
   if (ctx.session.timer) ctx.session.timer.stop();
 
-  ctx.session.timer = cron.schedule(`*/${INACTIVITY_TIMEOUT} * * * *`, () => {
+  ctx.session.timer = cron.schedule(`0 */${INACTIVITY_TIMEOUT} * * * *`, () => {
     ctx.reply(`Ваша сессия будет очищена через ${WARNING_TIMEOUT} минут(у) неактивности`);
     ctx.session.warningTimer = setTimeout(() => {
       clearSession(ctx);
@@ -52,4 +52,3 @@ function clearSession(ctx) {
   ctx.session = INITIAL_SESSION
   ctx.reply('Сессия очищена из-за неактивности')
 }
-
