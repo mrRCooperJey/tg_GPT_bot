@@ -5,7 +5,7 @@ export const INITIAL_SESSION = {
 }
 
 // время неактивности (в миллисекундах), после которого сессия сбросится
-const INACTIVITY_TIMEOUT = 2 * 60 * 1000 // 5 минут
+const INACTIVITY_TIMEOUT = 5 * 60 * 1000 // 5 минут
 
 export async function initCommand(ctx) {
   ctx.session = INITIAL_SESSION
