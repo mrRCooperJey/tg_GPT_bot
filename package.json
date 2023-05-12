@@ -19,7 +19,9 @@
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "axios": "^1.4.0",
     "config": "^3.3.9",
+    "cron": "^2.3.0",
     "fluent-ffmpeg": "^2.1.2",
+    "node-cron": "^3.0.2",
     "openai": "^3.2.1",
     "telegraf": "^4.12.2"
   }

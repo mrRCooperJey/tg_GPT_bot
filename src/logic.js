@@ -1,48 +1,55 @@
-import { openai } from './openai.js'
+import { openai } from './openai.js';
+import cron from 'node-cron';
 
 export const INITIAL_SESSION = {
   messages: [],
-}
+};
 
-// время неактивности (в миллисекундах), после которого сессия сбросится
-const INACTIVITY_TIMEOUT = 5 * 60 * 1000 // 5 минут
+const INACTIVITY_TIMEOUT = 5; // 5 минут
+const WARNING_TIMEOUT = 1; // 4 минуты
 
 export async function initCommand(ctx) {
-  ctx.session = INITIAL_SESSION
-  startInactivityTimer(ctx)
-  await ctx.reply('Жду вашего голосового или текстового сообщения')
+  ctx.session = INITIAL_SESSION;
+  startInactivityTimer(ctx);
+  await ctx.reply('Жду вашего голосового или текстового сообщения');
 }
 
 export async function processTextToChat(ctx, content) {
   try {
-    clearTimeout(ctx.session.timerId) // сбросить таймер при каждом взаимодействии
-    ctx.session.messages.push({ role: openai.roles.USER, content })
+    clearTimeout(ctx.session.timerId);
+    ctx.session.messages.push({ role: openai.roles.USER, content });
 
-    const response = await openai.chat(ctx.session.messages)
+    const response = await openai.chat(ctx.session.messages);
 
     ctx.session.messages.push({
       role: openai.roles.ASSISTANT,
       content: response.content,
-    })
+    });
 
-    await ctx.reply(response.content)
+    await ctx.reply(response.content);
 
-    startInactivityTimer(ctx) // установить новый таймер после взаимодействия
+    startInactivityTimer(ctx);
   } catch (e) {
-    console.log('Error while proccesing text to gpt', e.message)
+    console.log('Error while processing text to gpt', e.message);
   }
 }
 
 function startInactivityTimer(ctx) {
-  // установить таймер, который вызовет функцию clearSession через INACTIVITY_TIMEOUT
-  ctx.session.timerId = setTimeout(() => {
-    // предупредить пользователя об очистке сессии за 1 минуту до сброса
-    ctx.reply('Ваша сессия будет очищена через 1 минуту неактивности')
-    ctx.session.timerId = setTimeout(clearSession, 60 * 1000, ctx)
-  }, INACTIVITY_TIMEOUT)
+  if (ctx.session.timer) ctx.session.timer.stop();
+
+  ctx.session.timer = cron.schedule(`*/${INACTIVITY_TIMEOUT} * * * *`, () => {
+    ctx.reply(`Ваша сессия будет очищена через ${WARNING_TIMEOUT} минут(у) неактивности`);
+    ctx.session.warningTimer = setTimeout(() => {
+      clearSession(ctx);
+    }, WARNING_TIMEOUT * 60 * 1000);
+  });
 }
 
 function clearSession(ctx) {
+  if (ctx.session.timer) {
+    ctx.session.timer.stop();
+  }
   ctx.session = INITIAL_SESSION
   ctx.reply('Сессия очищена из-за неактивности')
 }
+
